@@ -104,7 +104,7 @@ export default function ProductForm({ categories, editing, onClose }) {
             <select
               value={form.category_id}
               onChange={e => setForm({ ...form, category_id: e.target.value })}
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
               <option value="">Tanlang...</option>
@@ -124,7 +124,7 @@ export default function ProductForm({ categories, editing, onClose }) {
                   value={form[f.key]}
                   onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                   placeholder={f.placeholder}
-                  className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required={['name', 'price', 'stock'].includes(f.key)}
                 />
               </div>
@@ -139,7 +139,7 @@ export default function ProductForm({ categories, editing, onClose }) {
               onChange={e => setForm({ ...form, description: e.target.value })}
               placeholder="Mahsulot haqida qisqacha..."
               rows={3}
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border rounded-lg px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
