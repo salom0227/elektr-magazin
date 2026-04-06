@@ -1,10 +1,14 @@
 const jwt = require('jsonwebtoken');
 
-module.exports = (req, res, next) => {
+module.exports = (roles = []) => (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Token yo\'q' });
   try {
-    jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (roles.length && !roles.includes(decoded.role)) {
+      return res.status(403).json({ error: 'Ruxsat yo\'q' });
+    }
+    req.user = decoded;
     next();
   } catch {
     res.status(401).json({ error: 'Token yaroqsiz' });
