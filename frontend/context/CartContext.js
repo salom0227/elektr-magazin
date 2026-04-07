@@ -1,7 +1,7 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const CartContext = createContext();
+const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
@@ -26,22 +26,19 @@ export function CartProvider({ children }) {
   };
 
   const removeFromCart = (id) => save(cart.filter(i => i.id !== id));
-
-  const updateQty = (id, qty) => {
-    if (qty < 1) return removeFromCart(id);
-    save(cart.map(i => i.id === id ? { ...i, qty } : i));
-  };
-
+  const updateQty = (id, qty) => qty < 1 ? removeFromCart(id) : save(cart.map(i => i.id === id ? { ...i, qty } : i));
   const clearCart = () => save([]);
-
-  const total = cart.reduce((sum, i) => sum + Number(i.price) * i.qty, 0);
-  const count = cart.reduce((sum, i) => sum + i.qty, 0);
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQty, clearCart, total, count }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQty, clearCart, total }}>
       {children}
     </CartContext.Provider>
   );
 }
 
-export const useCart = () => useContext(CartContext);
+export function useCart() {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error('useCart must be used within CartProvider');
+  return ctx;
+}
