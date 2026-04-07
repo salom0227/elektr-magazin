@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'Elektr Magazin',
-  description: 'Rozetka, adapter, kabel va boshqa elektr aksessuarlar',
+  description: 'Sifatli elektr aksessuarlar do\'koni',
 };
 
 export default function RootLayout({ children }) {
