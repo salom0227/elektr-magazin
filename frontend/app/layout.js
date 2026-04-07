@@ -1,3 +1,4 @@
+import { CartProvider } from "@/context/CartContext";
 import Providers from './providers';
 import './globals.css';
 
@@ -11,7 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="uz">
       <body>
         <Providers>
-          {children}
+          <CartProvider>{children}</CartProvider>
         </Providers>
       </body>
     </html>
