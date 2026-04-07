@@ -11,9 +11,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="uz">
       <body>
-        <Providers>
+        <CartProvider>
+          <Providers>
           <CartProvider>{children}</CartProvider>
         </Providers>
+        </CartProvider>
       </body>
     </html>
   );
