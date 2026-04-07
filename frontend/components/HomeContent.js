@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import { useCart } from '@/context/CartContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -32,7 +31,6 @@ export default function HomeContent() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
-      <Navbar />
 
       {/* Hero */}
       <div className="relative overflow-hidden py-20 px-4"
