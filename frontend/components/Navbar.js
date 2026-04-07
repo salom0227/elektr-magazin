@@ -4,7 +4,7 @@ import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
-  const { count } = useCart();
+  const { cart } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -40,10 +40,10 @@ export default function Navbar() {
               style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
               <span className="text-white">🛒</span>
               <span className="text-white hidden sm:inline">Savatcha</span>
-              {count > 0 && (
+              {cart.length > 0 && (
                 <span className="animate-fadeIn absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center text-gray-900"
                   style={{ background: '#facc15' }}>
-                  {count}
+                  {cart.length}
                 </span>
               )}
             </div>
