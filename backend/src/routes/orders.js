@@ -4,15 +4,17 @@ const pool = require('../config/db');
 const axios = require('axios');
 
 router.post('/', async (req, res) => {
-  const { name, phone, address, items } = req.body;
+  const { name, phone, address, latitude, longitude, items } = req.body;
   try {
     const orderResult = await pool.query(
-      'INSERT INTO orders (name, phone, address) VALUES ($1,$2,$3) RETURNING *',
-      [name, phone, address]
+      'INSERT INTO orders (name, phone, address, latitude, longitude) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      [name, phone, address, latitude || null, longitude || null]
     );
     const order = orderResult.rows[0];
+
     let telegramText = `🛒 *Yangi buyurtma!*\n\n`;
     telegramText += `👤 ${name}\n📞 ${phone}\n📍 ${address}\n\n`;
+
     let total = 0;
     for (let i = 0; i < items.length; i++) {
       const { product_id, qty } = items[i];
@@ -28,10 +30,20 @@ router.post('/', async (req, res) => {
       }
     }
     telegramText += `\n💰 *Jami: ${total.toLocaleString()} so'm*`;
-    await axios.post(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-      { chat_id: process.env.TELEGRAM_CHAT_ID, text: telegramText, parse_mode: 'Markdown' }
-    );
+
+    const BOT = process.env.TELEGRAM_BOT_TOKEN;
+    const CHAT = process.env.TELEGRAM_CHAT_ID;
+
+    await axios.post(`https://api.telegram.org/bot${BOT}/sendMessage`, {
+      chat_id: CHAT, text: telegramText, parse_mode: 'Markdown'
+    });
+
+    if (latitude && longitude) {
+      await axios.post(`https://api.telegram.org/bot${BOT}/sendLocation`, {
+        chat_id: CHAT, latitude: parseFloat(latitude), longitude: parseFloat(longitude)
+      });
+    }
+
     res.json({ success: true, order_id: order.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
