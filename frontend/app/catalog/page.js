@@ -3,7 +3,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import { useCart } from '@/context/CartContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -45,7 +44,6 @@ function CatalogContent() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
-      <Navbar />
 
       {/* Header */}
       <div className="py-10 px-4" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a8a)' }}>

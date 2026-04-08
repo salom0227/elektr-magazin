@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
-import Navbar from '@/components/Navbar';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 
@@ -27,7 +26,6 @@ export default function ProductPage() {
 
   if (!product) return (
     <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
-      <Navbar />
       <div className="flex items-center justify-center py-40">
         <div className="text-center">
           <div className="text-6xl animate-float mb-4">⚡</div>
@@ -39,7 +37,6 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
-      <Navbar />
       <div className="max-w-5xl mx-auto px-4 py-10">
         <Link href="/catalog" className="inline-flex items-center gap-2 text-blue-600 text-sm font-medium mb-6 hover:underline">
           ← Katalogga qaytish
