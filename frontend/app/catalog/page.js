@@ -7,141 +7,222 @@ import { useCart } from '@/context/CartContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-const CATEGORY_ICONS = {
-  'Rozetka': '🔌', 'Удлинитель': '🔗', 'Adapter': '🔄',
-  'USB rozetka': '⚡', 'Smart rozetka': '📱', 'Vilka': '🔌',
-  'Kabel organayzer': '📦', 'Switch': '🔀', 'Triple rozetka': '🔌'
+const getCatIcon = (name = '') => {
+  const map = { 'rozetka':'🔌','удлинитель':'🔗','adapter':'🔄','usb':'📲','smart':'📱','vilka':'🔌','kabel':'📦','switch':'🔀','triple':'🔌' };
+  for (const [k,v] of Object.entries(map)) if (name.toLowerCase().includes(k)) return v;
+  return '⚡';
 };
 
 function CatalogContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || '');
   const [added, setAdded] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState('');
   const { addToCart } = useCart();
 
-  const load = async () => {
+  useEffect(() => {
+    axios.get(`${API}/api/categories`).then(r => setCategories(r.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (activeCategory) params.append('category_id', activeCategory);
-    const res = await axios.get(`${API}/api/products?${params}`);
-    setProducts(res.data);
-  };
-
-  useEffect(() => {
-    axios.get(`${API}/api/categories`).then(r => setCategories(r.data));
-  }, []);
-
-  useEffect(() => { load(); }, [search, activeCategory]);
+    axios.get(`${API}/api/products?${params}`)
+      .then(r => {
+        let data = r.data;
+        if (sortBy === 'price_asc') data = [...data].sort((a,b) => a.price - b.price);
+        if (sortBy === 'price_desc') data = [...data].sort((a,b) => b.price - a.price);
+        setProducts(data);
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, [search, activeCategory, sortBy]);
 
   const handleAdd = (p) => {
-    addToCart(p);
-    setAdded(a => ({ ...a, [p.id]: true }));
-    setTimeout(() => setAdded(a => ({ ...a, [p.id]: false })), 2000);
+    addToCart({...p, qty:1});
+    setAdded(a => ({...a, [p.id]:true}));
+    setTimeout(() => setAdded(a => ({...a, [p.id]:false})), 2000);
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
+    <div>
+      {/* ── HEADER — to'q yashil-qora ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0a1f0a 0%, #14532d 60%, #0f2d1a 100%)',
+        padding: '40px 0',
+      }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>
+            <Link href="/" style={{ color: 'rgba(255,255,255,0.5)', textDecoration:'none' }}>Bosh sahifa</Link>
+            {' → '}
+            <span style={{ color: 'white' }}>Katalog</span>
+          </div>
+          <h1 style={{ color: 'white', fontSize: 36, fontWeight: 900, marginBottom: 6 }}>Katalog</h1>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15, marginBottom: 20 }}>
+            {products.length} ta mahsulot mavjud
+          </p>
 
-      {/* Header */}
-      <div className="py-10 px-4" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a8a)' }}>
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-4">Katalog</h1>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
-            <input
-              type="text"
-              placeholder="Mahsulot qidirish..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full rounded-2xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
-            />
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Search */}
+            <form onSubmit={e => e.preventDefault()} style={{
+              flex: 1, maxWidth: 460, display: 'flex',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1.5px solid rgba(255,255,255,0.25)',
+              borderRadius: 14, overflow: 'hidden',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Mahsulot qidirish..."
+                style={{
+                  flex: 1, padding: '12px 18px',
+                  background: 'transparent', border: 'none', outline: 'none',
+                  color: 'white', fontFamily: 'inherit', fontSize: 15,
+                }}
+              />
+              <button type="submit" style={{
+                padding: '12px 20px', background: 'rgba(255,255,255,0.15)',
+                border: 'none', cursor: 'pointer', color: 'white',
+                fontSize: 18, borderLeft: '1px solid rgba(255,255,255,0.15)',
+                transition: 'background .2s',
+              }}>🔍</button>
+            </form>
+
+            {/* Sort */}
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
+              padding: '11px 16px', borderRadius: 12,
+              border: '1.5px solid rgba(255,255,255,0.25)',
+              background: 'rgba(255,255,255,0.12)',
+              color: 'white', fontFamily: 'inherit',
+              fontSize: 13, fontWeight: 600, outline: 'none',
+              cursor: 'pointer', backdropFilter: 'blur(8px)',
+            }}>
+              <option value="" style={{color:'#111'}}>Saralash</option>
+              <option value="price_asc" style={{color:'#111'}}>Narx: arzon</option>
+              <option value="price_desc" style={{color:'#111'}}>Narx: qimmat</option>
+            </select>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Filter */}
-        <div className="flex gap-2 flex-wrap mb-8">
-          <button onClick={() => setActiveCategory('')}
-            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300"
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
+        {/* Filter chips */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8, padding:'24px 0' }}>
+          <button
+            onClick={() => setActiveCategory('')}
             style={{
-              background: !activeCategory ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'white',
-              color: !activeCategory ? 'white' : '#64748b',
-              border: '1px solid #e2e8f0',
-              boxShadow: !activeCategory ? '0 4px 15px rgba(59,130,246,0.4)' : 'none'
-            }}>
-            Hammasi
-          </button>
+              padding: '7px 18px', borderRadius: 24,
+              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              border: '1.5px solid',
+              borderColor: !activeCategory ? '#16a34a' : '#e5e7eb',
+              background: !activeCategory ? '#16a34a' : 'white',
+              color: !activeCategory ? 'white' : '#4b5563',
+              boxShadow: !activeCategory ? '0 4px 12px rgba(22,163,74,0.25)' : 'none',
+              transition: 'all .2s',
+            }}>Hammasi</button>
           {categories.map(c => (
-            <button key={c.id} onClick={() => setActiveCategory(String(c.id))}
-              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300"
+            <button key={c.id}
+              onClick={() => setActiveCategory(activeCategory === String(c.id) ? '' : String(c.id))}
               style={{
-                background: activeCategory === String(c.id) ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'white',
-                color: activeCategory === String(c.id) ? 'white' : '#64748b',
-                border: '1px solid #e2e8f0',
-                boxShadow: activeCategory === String(c.id) ? '0 4px 15px rgba(59,130,246,0.4)' : 'none'
+                padding: '7px 18px', borderRadius: 24,
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                border: '1.5px solid',
+                borderColor: activeCategory === String(c.id) ? '#16a34a' : '#e5e7eb',
+                background: activeCategory === String(c.id) ? '#16a34a' : 'white',
+                color: activeCategory === String(c.id) ? 'white' : '#4b5563',
+                boxShadow: activeCategory === String(c.id) ? '0 4px 12px rgba(22,163,74,0.25)' : 'none',
+                transition: 'all .2s',
               }}>
-              {CATEGORY_ICONS[c.name] || '⚡'} {c.name}
+              {getCatIcon(c.name)} {c.name}
             </button>
           ))}
         </div>
 
-        <p className="text-gray-500 text-sm mb-5 font-medium">{products.length} ta mahsulot topildi</p>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {products.map((p, i) => (
-            <div key={p.id} className="card-3d bg-white rounded-2xl overflow-hidden"
-              style={{ border: '1px solid #e2e8f0' }}>
-              <Link href={`/product/${p.slug}`}>
-                <div className="relative overflow-hidden" style={{ height: '180px', background: '#f8fafc' }}>
-                  {p.image
-                    ? <img src={p.image} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
-                    : <div className="w-full h-full flex items-center justify-center text-6xl">⚡</div>
-                  }
+        {/* Grid */}
+        {loading ? (
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, paddingBottom:40 }}>
+            {Array.from({length:8}).map((_,i) => (
+              <div key={i} style={{ borderRadius:20, overflow:'hidden' }}>
+                <div style={{
+                  height:200, borderRadius:12,
+                  background:'linear-gradient(90deg,#d1fae5 25%,#ecfdf5 50%,#d1fae5 75%)',
+                  backgroundSize:'200% 100%',
+                  animation:'shimmer 1.4s infinite',
+                }}/>
+                <div style={{padding:14,background:'white',marginTop:4,borderRadius:12}}>
+                  <div style={{height:14,width:'60%',marginBottom:8,borderRadius:6,background:'#f3f4f6'}}/>
+                  <div style={{height:20,width:'40%',borderRadius:6,background:'#f3f4f6'}}/>
                 </div>
-              </Link>
-              <div className="p-4">
-                <span className="text-xs font-medium px-2 py-1 rounded-lg"
-                  style={{ background: '#eff6ff', color: '#3b82f6' }}>
-                  {p.category_name}
-                </span>
-                <Link href={`/product/${p.slug}`}>
-                  <p className="font-semibold text-gray-800 text-sm mt-2 hover:text-blue-600 transition-colors line-clamp-2">
-                    {p.name}
-                  </p>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'80px 20px', color:'#9ca3af' }}>
+            <div style={{ fontSize:64, marginBottom:16, opacity:.5 }}>🔍</div>
+            <div style={{ fontSize:18, fontWeight:700, color:'#6b7280' }}>Mahsulot topilmadi</div>
+            <div style={{ fontSize:13, marginTop:8 }}>Boshqa so'z bilan qidiring</div>
+            <button onClick={() => { setSearch(''); setActiveCategory(''); }}
+              style={{
+                marginTop:20, padding:'10px 24px', borderRadius:12,
+                background:'#16a34a', color:'white', border:'none',
+                fontFamily:'inherit', fontWeight:700, fontSize:14, cursor:'pointer',
+              }}>Filterlarni tozalash</button>
+          </div>
+        ) : (
+          <div style={{
+            display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, paddingBottom:48
+          }} className="stagger">
+            {products.map(p => (
+              <div key={p.id} className="product-card card-3d anim-fade-up">
+                <div className="card-shine"/>
+                <span className="p-badge">Yangi</span>
+                <button className="p-wish">♡</button>
+                <Link href={`/product/${p.slug}`} style={{textDecoration:'none'}}>
+                  <div className="p-img">
+                    {p.image ? <img src={p.image} alt={p.name}/> : <span style={{fontSize:56}}>⚡</span>}
+                  </div>
                 </Link>
-                {p.brand && <p className="text-gray-400 text-xs mt-0.5">{p.brand}</p>}
-                <p className="font-bold mt-2 text-lg" style={{ color: '#1d4ed8' }}>
-                  {Number(p.price).toLocaleString()} <span className="text-sm font-normal text-gray-500">so'm</span>
-                </p>
-                <button onClick={() => handleAdd(p)}
-                  className="w-full mt-3 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300"
-                  style={{
-                    background: added[p.id] ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                    color: 'white',
-                    boxShadow: added[p.id] ? '0 4px 15px rgba(16,185,129,0.4)' : '0 4px 15px rgba(59,130,246,0.3)'
-                  }}>
-                  {added[p.id] ? '✅ Qo\'shildi!' : '🛒 Savatchaga'}
+                <div className="p-body">
+                  <span className="p-cat">{p.category_name}</span>
+                  <Link href={`/product/${p.slug}`} style={{textDecoration:'none'}}>
+                    <div className="p-name">{p.name}</div>
+                  </Link>
+                  {p.brand && <div style={{fontSize:11,color:'#9ca3af'}}>{p.brand}</div>}
+                  <div style={{display:'flex',gap:2,margin:'4px 0'}}>
+                    {[1,2,3,4,5].map(s=><span key={s} style={{fontSize:11,color:'#f59e0b'}}>★</span>)}
+                  </div>
+                  <div className="p-price">
+                    {Number(p.price).toLocaleString('uz-UZ')} <span>so'm</span>
+                  </div>
+                </div>
+                <button className={`p-btn${added[p.id]?' added':''}`} onClick={()=>handleAdd(p)}>
+                  {added[p.id] ? '✅ Qo\'shildi' : '🛒 Savatchaga'}
                 </button>
               </div>
-            </div>
-          ))}
-          {products.length === 0 && (
-            <div className="col-span-4 text-center py-20">
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="text-gray-500 font-medium">Mahsulot topilmadi</p>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default function CatalogPage() {
-  return <Suspense><CatalogContent /></Suspense>;
+  return (
+    <Suspense fallback={
+      <div style={{display:'flex',justifyContent:'center',padding:80,color:'#9ca3af',flexDirection:'column',alignItems:'center',gap:12}}>
+        <div style={{fontSize:40}}>⚡</div>
+        <div>Yuklanmoqda...</div>
+      </div>
+    }>
+      <CatalogContent/>
+    </Suspense>
+  );
 }

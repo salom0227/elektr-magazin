@@ -1,9 +1,12 @@
+// ──────────────────────────────────────────────
+// app/product/[slug]/page.js
+// ──────────────────────────────────────────────
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
-import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -12,103 +15,173 @@ export default function ProductPage() {
   const [product, setProduct] = useState(null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [tab, setTab] = useState('desc');
   const { addToCart } = useCart();
 
   useEffect(() => {
-    axios.get(`${API}/api/products/${slug}`).then(r => setProduct(r.data));
+    axios.get(`${API}/api/products/${slug}`).then(r => setProduct(r.data)).catch(() => {});
   }, [slug]);
 
   const handleAdd = () => {
-    for (let i = 0; i < qty; i++) addToCart(product);
+    for (let i = 0; i < qty; i++) addToCart({ ...product, qty: 1 });
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    setTimeout(() => setAdded(false), 2500);
   };
 
   if (!product) return (
-    <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
-      <div className="flex items-center justify-center py-40">
-        <div className="text-center">
-          <div className="text-6xl animate-float mb-4">⚡</div>
-          <p className="text-gray-500 font-medium">Yuklanmoqda...</p>
-        </div>
-      </div>
+    <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--gray-400)' }}>
+      <div style={{ fontSize: 48, animation: 'float 2s ease-in-out infinite' }}>⚡</div>
+      <div style={{ fontWeight: 600 }}>Yuklanmoqda...</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen" style={{ background: '#f0f4f8' }}>
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <Link href="/catalog" className="inline-flex items-center gap-2 text-blue-600 text-sm font-medium mb-6 hover:underline">
-          ← Katalogga qaytish
-        </Link>
+    <div className="main-wrap page-enter">
+      {/* Breadcrumb */}
+      <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 24, display: 'flex', gap: 6, alignItems: 'center' }}>
+        <Link href="/" style={{ color: 'var(--gray-500)' }}>Bosh sahifa</Link>
+        <span>›</span>
+        <Link href="/catalog" style={{ color: 'var(--gray-500)' }}>Katalog</Link>
+        <span>›</span>
+        <span style={{ color: 'var(--gray-800)', fontWeight: 600 }}>{product.name}</span>
+      </div>
 
-        <div className="bg-white rounded-3xl overflow-hidden" style={{ border: '1px solid #e2e8f0', boxShadow: '0 20px 60px rgba(0,0,0,0.08)' }}>
-          <div className="md:flex">
-            {/* Rasm */}
-            <div className="md:w-1/2 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f4f8, #e2e8f0)', minHeight: '400px' }}>
-              {product.image
-                ? <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" style={{ minHeight: '400px' }} />
-                : <div className="w-full flex items-center justify-center text-9xl animate-float" style={{ minHeight: '400px' }}>⚡</div>
-              }
-              <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl text-xs font-semibold text-white"
-                style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>
-                {product.category_name}
+      <div style={{
+        background: 'var(--white)', borderRadius: 'var(--r-xl)',
+        border: '1.5px solid var(--gray-200)',
+        overflow: 'hidden', boxShadow: 'var(--sh-lg)',
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+          {/* Image */}
+          <div className="pd-img-wrap" style={{ margin: 24, borderRadius: 20 }}>
+            {product.image
+              ? <img src={product.image} alt={product.name} />
+              : <span style={{ fontSize: 100, opacity: .3 }}>⚡</span>
+            }
+            {/* badge */}
+            <div style={{
+              position: 'absolute', top: 14, left: 14,
+              padding: '4px 14px', borderRadius: 20,
+              background: 'var(--g)', color: 'white',
+              fontSize: 11, fontWeight: 800, letterSpacing: .5,
+            }}>Yangi</div>
+          </div>
+
+          {/* Info */}
+          <div style={{ padding: '32px 32px 32px 24px' }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: 'var(--g)',
+              background: 'var(--g-50)', padding: '3px 10px', borderRadius: 6,
+              textTransform: 'uppercase', letterSpacing: .5,
+            }}>{product.category_name}</span>
+
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--gray-900)', marginTop: 12, lineHeight: 1.25 }}>
+              {product.name}
+            </h1>
+
+            {product.brand && (
+              <div style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>
+                {product.brand} {product.model && `— ${product.model}`}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 2, margin: '10px 0' }}>
+              {[1,2,3,4,5].map(s => <span key={s} style={{ fontSize: 16, color: '#f59e0b' }}>★</span>)}
+              <span style={{ fontSize: 12, color: 'var(--gray-400)', marginLeft: 6, alignSelf: 'center' }}>5.0</span>
+            </div>
+
+            {/* Price */}
+            <div style={{
+              padding: '16px 0', borderTop: '1.5px solid var(--gray-200)',
+              borderBottom: '1.5px solid var(--gray-200)', margin: '16px 0',
+            }}>
+              <div style={{ fontSize: 38, fontWeight: 900, color: 'var(--g-dark)' }}>
+                {Number(product.price).toLocaleString('uz-UZ')}
+                <span style={{ fontSize: 16, color: 'var(--gray-400)', fontWeight: 500, marginLeft: 6 }}>so'm</span>
               </div>
             </div>
 
-            {/* Info */}
-            <div className="md:w-1/2 p-8">
-              <h1 className="text-2xl font-bold text-gray-800 leading-snug mb-2">{product.name}</h1>
-              {product.brand && (
-                <p className="text-gray-400 text-sm mb-4">{product.brand} — {product.model}</p>
-              )}
-
-              <div className="py-4 border-y border-gray-100 mb-6">
-                <p className="text-4xl font-bold" style={{ color: '#1d4ed8' }}>
-                  {Number(product.price).toLocaleString()}
-                  <span className="text-lg font-normal text-gray-500 ml-1">so'm</span>
-                </p>
-              </div>
-
-              {/* Xususiyatlar */}
-              <div className="space-y-3 mb-6">
-                {product.voltage && (
-                  <div className="flex items-center justify-between py-2 px-3 rounded-xl" style={{ background: '#f8fafc' }}>
-                    <span className="text-gray-500 text-sm">⚡ Kuchlanish</span>
-                    <span className="font-semibold text-gray-800 text-sm">{product.voltage}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between py-2 px-3 rounded-xl" style={{ background: '#f8fafc' }}>
-                  <span className="text-gray-500 text-sm">📦 Omborda</span>
-                  <span className={`font-semibold text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                    {product.stock > 0 ? `${product.stock} ta mavjud` : 'Tugagan'}
-                  </span>
+            {/* Specs */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              {product.voltage && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--gray-50)', borderRadius: 10 }}>
+                  <span style={{ fontSize: 13, color: 'var(--gray-500)' }}>⚡ Kuchlanish</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-800)' }}>{product.voltage}</span>
                 </div>
-              </div>
-
-              {product.description && (
-                <p className="text-gray-600 text-sm leading-relaxed mb-6">{product.description}</p>
               )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--gray-50)', borderRadius: 10 }}>
+                <span style={{ fontSize: 13, color: 'var(--gray-500)' }}>📦 Omborda</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: product.stock > 0 ? 'var(--g)' : '#ef4444' }}>
+                  {product.stock > 0 ? `${product.stock} ta mavjud` : 'Tugagan'}
+                </span>
+              </div>
+            </div>
 
-              {/* Miqdor va qo'shish */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center rounded-2xl overflow-hidden" style={{ border: '2px solid #e2e8f0' }}>
-                  <button onClick={() => setQty(q => Math.max(1, q - 1))}
-                    className="px-4 py-3 font-bold text-gray-600 hover:bg-gray-50 transition-colors text-lg">−</button>
-                  <span className="px-5 py-3 font-bold text-gray-800 text-lg min-w-[3rem] text-center">{qty}</span>
-                  <button onClick={() => setQty(q => q + 1)}
-                    className="px-4 py-3 font-bold text-gray-600 hover:bg-gray-50 transition-colors text-lg">+</button>
-                </div>
-                <button onClick={handleAdd}
-                  className="flex-1 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 btn-glow"
-                  style={{
-                    background: added ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                    boxShadow: added ? '0 8px 25px rgba(16,185,129,0.4)' : '0 8px 25px rgba(59,130,246,0.4)'
+            {/* Qty + Add */}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div className="qty-ctrl">
+                <button className="qty-btn" onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
+                <div className="qty-num">{qty}</div>
+                <button className="qty-btn" onClick={() => setQty(q => q + 1)}>+</button>
+              </div>
+              <button
+                onClick={handleAdd}
+                disabled={product.stock === 0}
+                style={{
+                  flex: 1, padding: '13px 20px',
+                  borderRadius: 'var(--r-lg)', border: 'none',
+                  background: added ? '#059669' : product.stock === 0 ? 'var(--gray-300)' : 'var(--g)',
+                  color: 'white', fontFamily: 'inherit', fontWeight: 800, fontSize: 15,
+                  cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+                  transition: 'all .2s',
+                  transform: added ? 'scale(0.98)' : 'scale(1)',
+                  boxShadow: added ? 'none' : 'var(--sh-green)',
+                }}
+              >
+                {added ? '✅ Savatchangizga qo\'shildi!' : '🛒 Savatchaga qo\'shish'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ borderTop: '1.5px solid var(--gray-200)', padding: '0 32px' }}>
+          <div style={{ display: 'flex', gap: 0 }}>
+            {[['desc', '📋 Tavsif'], ['specs', '⚙️ Xususiyatlar']].map(([k, l]) => (
+              <button key={k} onClick={() => setTab(k)} style={{
+                padding: '14px 20px', background: 'none', border: 'none',
+                borderBottom: tab === k ? '3px solid var(--g)' : '3px solid transparent',
+                color: tab === k ? 'var(--g)' : 'var(--gray-500)',
+                fontFamily: 'inherit', fontWeight: 700, fontSize: 13,
+                cursor: 'pointer', transition: 'all .2s',
+              }}>{l}</button>
+            ))}
+          </div>
+          <div style={{ padding: '20px 0 28px' }}>
+            {tab === 'desc' ? (
+              <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.8 }}>
+                {product.description || 'Mahsulot haqida ma\'lumot yo\'q.'}
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {[
+                  ['Nomi', product.name],
+                  ['Brend', product.brand],
+                  ['Model', product.model],
+                  ['Kuchlanish', product.voltage],
+                  ['Kategoriya', product.category_name],
+                  ['Omborda', `${product.stock} ta`],
+                ].filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k} style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    padding: '9px 14px', background: 'var(--gray-50)', borderRadius: 10,
                   }}>
-                  {added ? '✅ Savatchangizga qo\'shildi!' : '🛒 Savatchaga qo\'shish'}
-                </button>
+                    <span style={{ fontSize: 13, color: 'var(--gray-500)' }}>{k}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-800)' }}>{v}</span>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
