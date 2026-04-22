@@ -105,6 +105,7 @@ export default function HomeContent() {
     setTimeout(()=>setAdded(a=>({...a,[p.id]:false})),2000);
   };
 
+  const [showInfo, setShowInfo] = useState(false);
   const sl = SLIDES[current];
   // Oxirgi 3 ta mahsulot
   const newProducts = [...products].slice(-3);
@@ -137,7 +138,7 @@ export default function HomeContent() {
                   <p className="slide-desc">{s.desc}</p>
                   <div className="slide-actions">
                     <Link href={s.btn1href}><button className="slide-btn slide-btn-primary" style={{background:s.accent,color:'#000'}}>{s.btn1} →</button></Link>
-                    <button className="slide-btn slide-btn-ghost">Batafsil</button>
+                    <button className="slide-btn slide-btn-ghost" onClick={()=>setShowInfo(true)}>Batafsil</button>
                   </div>
                   <div style={{display:'flex',gap:28,marginTop:32}}>
                     {[['500+','Mahsulot'],['1000+','Mijoz'],['24/7','Xizmat']].map(([n,l])=>(
