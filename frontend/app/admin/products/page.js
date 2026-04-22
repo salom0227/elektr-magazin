@@ -12,8 +12,9 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
-  const headers = { Authorization: `Bearer ${token}` };
+  const getHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+  });
 
   const load = async () => {
     const [p, c] = await Promise.all([
@@ -28,18 +29,15 @@ export default function ProductsPage() {
 
   const handleDelete = async (id) => {
     if (!confirm('O\'chirishga ishonchingiz komilmi?')) return;
-    await axios.delete(`${API}/api/products/${id}`, { headers });
+    await axios.delete(`${API}/api/products/${id}`, { headers: getHeaders() });
     load();
   };
 
-  const handleEdit = (product) => {
-    setEditing(product);
-    setShowForm(true);
-  };
-
-  const handleClose = () => {
-    setShowForm(false);
-    setEditing(null);
+  const handleDeleteAll = async () => {
+    if (!confirm(`Barcha ${products.length} ta mahsulotni o\'chirasizmi?`)) return;
+    await Promise.all(products.map(p =>
+      axios.delete(`${API}/api/products/${p.id}`, { headers: getHeaders() })
+    ));
     load();
   };
 
@@ -47,19 +45,23 @@ export default function ProductsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Mahsulotlar</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
-          + Yangi mahsulot
-        </button>
+        <div className="flex gap-2">
+          {products.length > 0 && (
+            <button onClick={handleDeleteAll}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm font-medium">
+              🗑 Hammasini o'chirish
+            </button>
+          )}
+          <button onClick={() => { setEditing(null); setShowForm(true); }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+            + Yangi mahsulot
+          </button>
+        </div>
       </div>
 
-      <input
-        type="text"
-        placeholder="Qidirish..."
-        value={search}
+      <input type="text" placeholder="Qidirish..." value={search}
         onChange={e => setSearch(e.target.value)}
-        className="mb-4 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+        className="mb-4 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
@@ -92,7 +94,7 @@ export default function ProductsPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    <button onClick={() => handleEdit(p)}
+                    <button onClick={() => { setEditing(p); setShowForm(true); }}
                       className="text-blue-600 hover:underline text-xs font-medium">
                       Tahrirlash
                     </button>
@@ -112,11 +114,7 @@ export default function ProductsPage() {
       </div>
 
       {showForm && (
-        <ProductForm
-          categories={categories}
-          editing={editing}
-          onClose={handleClose}
-        />
+        <ProductForm categories={categories} editing={editing} onClose={() => { setShowForm(false); setEditing(null); load(); }} />
       )}
     </div>
   );

@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
       <body className="antialiased">
         <Providers>
           <NavbarWrapper />
-          <main>{children}</main>
+          <div>{children}</div>
         </Providers>
       </body>
     </html>
