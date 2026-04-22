@@ -16,7 +16,6 @@ router.get('/', async (req, res) => {
       WHERE 1=1
     `;
     const params = [];
-
     if (category_id) {
       params.push(category_id);
       query += ` AND p.category_id = $${params.length}`;
@@ -25,7 +24,6 @@ router.get('/', async (req, res) => {
       params.push(`%${search}%`);
       query += ` AND p.name ILIKE $${params.length}`;
     }
-
     query += ' ORDER BY p.created_at DESC';
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -51,27 +49,21 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// Mahsulot qo'shish (rasm bilan)
+// Mahsulot qo'shish
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, brand, model, voltage, category_id, stock } = req.body;
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
-
     let imageUrl = null;
-
     if (req.file) {
       const fileName = `${Date.now()}-${req.file.originalname}`;
       const { error } = await supabase.storage
         .from('products')
-        .upload(fileName, req.file.buffer, {
-          contentType: req.file.mimetype
-        });
+        .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
       if (error) throw error;
-
       const { data } = supabase.storage.from('products').getPublicUrl(fileName);
       imageUrl = data.publicUrl;
     }
-
     const result = await pool.query(
       `INSERT INTO products (name, slug, description, price, brand, model, voltage, image, category_id, stock)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
@@ -88,19 +80,15 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, brand, model, voltage, category_id, stock } = req.body;
     let imageUrl = req.body.existing_image;
-
     if (req.file) {
       const fileName = `${Date.now()}-${req.file.originalname}`;
       const { error } = await supabase.storage
         .from('products')
-        .upload(fileName, req.file.buffer, {
-          contentType: req.file.mimetype
-        });
+        .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
       if (error) throw error;
       const { data } = supabase.storage.from('products').getPublicUrl(fileName);
       imageUrl = data.publicUrl;
     }
-
     const result = await pool.query(
       `UPDATE products SET name=$1, description=$2, price=$3, brand=$4,
        model=$5, voltage=$6, image=$7, category_id=$8, stock=$9
@@ -113,9 +101,10 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-// Mahsulot o'chirish
+// Mahsulot o'chirish — avval order_items dan o'chiramiz
 router.delete('/:id', async (req, res) => {
   try {
+    await pool.query('DELETE FROM order_items WHERE product_id=$1', [req.params.id]);
     await pool.query('DELETE FROM products WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
