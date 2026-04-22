@@ -1,6 +1,6 @@
 import './globals.css';
 import Providers from './providers';
-import Navbar from '@/components/Navbar';
+import NavbarWrapper from '@/components/NavbarWrapper';
 
 export const metadata = {
   title: 'Elektr Magazin',
@@ -12,8 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="uz" data-scroll-behavior="smooth">
       <body className="antialiased">
         <Providers>
-          {/* Navbar useCart hook-ini ishlatgani uchun u Providers ichida bo'lishi shart */}
-          <Navbar />
+          <NavbarWrapper />
           <main>{children}</main>
         </Providers>
       </body>
